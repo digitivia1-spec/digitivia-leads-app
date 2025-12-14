@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digitivia Leads | Dashboard</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6; /* SaaS Blue */
+            --accent-hover: #2563eb;
+            --border: #334155;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .brand span { color: var(--accent); }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--accent);
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h2 { margin-top: 0; font-weight: 600; }
+
+        /* --- Forms & Inputs --- */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .form-group { margin-bottom: 16px; }
+        label { display: block; color: var(--text-muted); margin-bottom: 8px; font-size: 0.9rem; }
+        
+        input, select, textarea {
+            width: 100%;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+            box-sizing: border-box; /* Fix padding issues */
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background-color: var(--accent-hover); }
+        .btn.secondary { background-color: var(--border); }
+
+        /* --- Data Table --- */
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 14px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th { background-color: rgba(255,255,255,0.05); color: var(--text-muted); }
+        tr:hover { background-color: rgba(255,255,255,0.02); }
+
+        /* --- Login Overlay --- */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        /* --- Status/Logs --- */
+        .status-bar {
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 12px; height: 12px;
+            border: 2px solid var(--success);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; padding: 10px; flex-direction: row; justify-content: space-around; border-bottom: 1px solid var(--border); border-right: none; height: auto; }
+            .brand { display: none; }
+            .main-content { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="card" style="width: 300px; text-align: center;">
+            <h3>Digitivia Leads</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Restricted Access</p>
+            <input type="password" id="passcode" placeholder="Enter Access Code" style="margin-bottom: 15px;">
+            <button class="btn" onclick="checkAuth()">Enter Dashboard</button>
+            <p id="error-msg" style="color: red; display: none; margin-top: 10px; font-size: 0.8rem;">Invalid Passcode</p>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="brand">⚡ Digitivia<span>Leads</span></div>
+        <div class="nav-item active" onclick="switchTab('scraper')">🔍 New Scrape</div>
+        <div class="nav-item" onclick="switchTab('results')">📊 Review & Send</div>
+        <div class="nav-item" onclick="switchTab('settings')">⚙️ Settings</div>
+    </div>
+
+    <div class="main-content">
+        
+        <div id="view-scraper" class="container">
+            <h2>Start New Workflow</h2>
+            <div class="card">
+                <div class="form-group">
+                    <label>Lead Source</label>
+                    <select id="source-select" onchange="updateForm()">
+                        <option value="maps">Google Maps (Local Business)</option>
+                        <option value="apollo">Apollo / Leads (B2B)</option>
+                        <option value="linkedin">LinkedIn (Professionals)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label id="query-label">Target Industry / Keyword</label>
+                    <input type="text" id="keyword" placeholder="e.g., Construction Companies">
+                </div>
+
+                <div class="form-group">
+                    <label>Target Location</label>
+                    <input type="text" id="location" placeholder="e.g., Cairo, Egypt">
+                </div>
+
+                <button class="btn" onclick="runScraper()">🚀 Launch Workflow</button>
+                
+                <div id="status-box" class="status-bar">
+                    <span class="loading-spinner"></span> <span id="status-text">Workflow Running... This may take 2-5 minutes.</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-results" class="container" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Lead Review</h2>
+                <div>
+                    <button class="btn secondary" style="width: auto; margin-right: 10px;" onclick="exportCSV()">Download CSV</button>
+                    <button class="btn" style="width: auto;" onclick="prepareEmail()">✉️ Compose Email (<span id="sel-count">0</span>)</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" onchange="toggleAll(this)"></th>
+                            <th>Company</th>
+                            <th>Contact</th>
+                            <th>Role</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted);">No data loaded yet. Run a scrape first.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. AUTHENTICATION ---
+        function checkAuth() {
+            const pass = document.getElementById('passcode').value;
+            if (pass === 'Digitivia000') {
+                document.getElementById('login-overlay').style.display = 'none';
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        }
+
+        // --- 2. UI LOGIC ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.getElementById('view-scraper').style.display = 'none';
+            document.getElementById('view-results').style.display = 'none';
+
+            if (tabName === 'scraper') document.getElementById('view-scraper').style.display = 'block';
+            if (tabName === 'results') document.getElementById('view-results').style.display = 'block';
+        }
+
+        function updateForm() {
+            const source = document.getElementById('source-select').value;
+            const label = document.getElementById('query-label');
+            if (source === 'maps') label.innerText = "Business Type (e.g. Plumbers)";
+            else if (source === 'linkedin') label.innerText = "Job Title (e.g. Marketing Manager)";
+        }
+
+        // --- 3. WORKFLOW CONNECTION ---
+        // REPLACE THIS URL WITH YOUR N8N PRODUCTION WEBHOOK URL
+        const N8N_WEBHOOK_URL = 'https://n8n.srv1174105.hstgr.cloud/webhook/leads_dashboard'; 
+
+        async function runScraper() {
+            const source = document.getElementById('source-select').value;
+            const keyword = document.getElementById('keyword').value;
+            const location = document.getElementById('location').value;
+            
+            // Validate
+            if(!keyword || !location) return alert("Please fill in all fields");
+
+            // UI Update
+            const statusBox = document.getElementById('status-box');
+            statusBox.style.display = 'block';
+            document.getElementById('status-text').innerText = "Initializing Scraper... Please wait.";
+
+            try {
+                // Send data to n8n
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        source: source, // Used by Switch Node
+                        query: keyword,
+                        location: location
+                    })
+                });
+
+                const data = await response.json();
+                
+                // On Success
+                statusBox.style.display = 'none';
+                alert(`Success! Found ${data.length} leads.`);
+                renderTable(data);
+                switchTab('results'); // Auto-switch to results view
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status-text').innerText = "Error: Check Console. Did you enable CORS?";
+            }
+        }
+
+        // --- 4. DATA HANDLING ---
+        function renderTable(data) {
+            const tbody = document.querySelector('#results-table tbody');
+            tbody.innerHTML = ''; // Clear existing
+
+            data.forEach((lead, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input type="checkbox" class="lead-check" onchange="updateCount()"></td>
+                    <td><strong>${lead.company || lead.company_name || '-'}</strong></td>
+                    <td>${lead.name || lead.contact_name || '-'}</td>
+                    <td>${lead.role || '-'}</td>
+                    <td style="color: var(--accent);">${lead.email || '-'}</td>
+                    <td>${lead.phone || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateCount() {
+            const count = document.querySelectorAll('.lead-check:checked').length;
+            document.getElementById('sel-count').innerText = count;
+        }
+
+        function toggleAll(source) {
+            document.querySelectorAll('.lead-check').forEach(c => c.checked = source.checked);
+            updateCount();
+        }
+
+        function prepareEmail() {
+            const count = document.querySelectorAll('.lead-check:checked').length;
+            if(count === 0) return alert("Select at least one lead!");
+            alert(`Opening Email Compose for ${count} recipients... (This is where you integrate the SendGrid/Gmail API next!)`);
+        }
+    </script>
+</body>
+</html>
